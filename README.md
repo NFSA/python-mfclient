@@ -8,7 +8,7 @@ Python Mediaflux Client.
   - 2) import mfclient module into your python code and use the API to communicate with Mediaflux server.
 
   - 3) simple example below shows how to import the module, connect to mediaflux server and execute a service:
-```python
+```
 import mfclient
 
 if __name__ == '__main__':
@@ -30,6 +30,8 @@ if __name__ == '__main__':
     finally:
         connection.close()
 ```
+
+
 
 ### 2. Examples
 

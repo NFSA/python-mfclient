@@ -1512,7 +1512,5 @@ def _crc32(path):
     return crc
 
 
-if __name__ == '__main__':
-    with MFConnection('localhost', 8086, transport='http', domain='system', user='manager', password='change_me') as r:
-        print(r.execute('asset.get', '<args><id>535</id></args>'))
+# if __name__ == '__main__':
 

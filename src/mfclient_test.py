@@ -3,7 +3,7 @@ import unittest
 import tempfile
 import os
 
-_HOST = 'mediaflux-test.researchsoftware.unimelb.edu.au'
+_HOST = 'mediaflux.your.org'
 _PORT = 8443
 _TRANSPORT = 'https'
 _DOMAIN = 'system'

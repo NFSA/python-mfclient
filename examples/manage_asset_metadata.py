@@ -19,7 +19,7 @@ def create_asset(connection, name, namespace, note):
     :param note: Note for the asset
     :type note: str
     :return: id of the asset
-    :rtype: long
+    :rtype: int
     """
     # compose service arguments
     w = mfclient.XmlStringWriter('args')
@@ -38,7 +38,7 @@ def create_asset(connection, name, namespace, note):
     result = connection.execute('asset.create', w.doc_text())
 
     # return asset id
-    asset_id = result.long_value('id')
+    asset_id = result.int_value('id')
     return asset_id
 
 
@@ -48,7 +48,7 @@ def get_asset_metadata(connection, asset_id):
     :param connection: Mediaflux server connection object
     :type connection: mfclient.MFConnection
     :param asset_id: Asset id
-    :type asset_id: long, int or str
+    :type asset_id: int or str
     :return: asset metadata XmlElement object
     :rtype: mfclient.XmlElement
     """
@@ -68,7 +68,7 @@ def set_asset_metadata(connection, asset_id, new_name, new_note):
 
     :param connection: Mediaflux server connection object
     :param asset_id: Asset id
-    :type asset_id: long, int or str
+    :type asset_id: int or str
     :param new_name: New name for the asset
     :type new_name: str
     :param new_note:  New note for the asset

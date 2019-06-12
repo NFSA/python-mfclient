@@ -18,7 +18,7 @@ def create_asset_with_content(connection, name, namespace, input_file_path):
     :param input_file_path: Input file path
     :type input_file_path: str
     :return: id of the asset
-    :rtype: long
+    :rtype: int
     """
     # compose service arguments
     w = mfclient.XmlStringWriter('args')
@@ -36,7 +36,7 @@ def create_asset_with_content(connection, name, namespace, input_file_path):
     result = connection.execute('asset.create', w.doc_text(), inputs=[input])
 
     # return asset id
-    asset_id = result.long_value('id')
+    asset_id = result.int_value('id')
     return asset_id
 
 
@@ -46,7 +46,7 @@ def get_asset_content(connection, asset_id, output_file_path):
     :param connection: Mediaflux server connection object
     :type connection: mfclient.MFConnection
     :param asset_id: Asset id
-    :type asset_id: long, int or str
+    :type asset_id: int or str
     :return:
     """
     # compose service arguments

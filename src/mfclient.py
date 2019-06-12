@@ -7,8 +7,11 @@ import ssl
 import struct
 import threading
 import time
-import urllib
+import urllib.request
+import urllib.parse
+import urllib.error
 import xml.etree.ElementTree as ElementTree
+import logging
 
 
 ##############################################################################
@@ -19,10 +22,11 @@ def _get_xml_declaration(version='1.0', encoding='UTF-8'):
     """Gets XML declaration (for the specified version and encoding).
 
     :param version: XML version
+    :type version: str
     :param encoding: encoding
+    :type encoding: str
     :return: XML declaration
     :rtype: str
-
     """
     return '<?xml version="' + version + '" encoding="' + encoding + '"?>'
 
@@ -56,7 +60,7 @@ class XmlElement(object):
                 attrib = {}
             else:
                 if isinstance(attrib, dict):  # dictionary
-                    attrib = {str(k): str(attrib[k]) for k in attrib.keys()}
+                    attrib = {str(k): str(attrib[k]) for k in list(attrib.keys())}
                 else:
                     raise ValueError("'attrib' must be an instance of dictionary.")
             idx = name.find(':')
@@ -171,7 +175,8 @@ class XmlElement(object):
         return False
 
     def value(self, xpath=None, default=None):
-        """Gets the value at the specified xpath. If xpath argument is not given, return the value of the current element.
+        """Gets the value at the specified xpath. If xpath argument is not given, return the value of the current
+        element.
 
         :param xpath: xpath
         :type xpath: str
@@ -218,29 +223,9 @@ class XmlElement(object):
         else:
             return default
 
-    def long_value(self, xpath=None, default=None, base=10):
-        """Gets the long integer value at the specified xpath. If xpath argument is not given, return the value of the
-        current element.
-
-        :param xpath: xpath
-        :type xpath: str
-        :param default: value to return if node does not exist at the specified xpath
-        :type default: long
-        :param base: the radix base to use.
-        :type base: int
-        :return: value of the given xpath, or value of the element if xpath is not given.
-        :rtype: long
-
-        """
-        assert default is None or isinstance(default, long) or isinstance(default, int)
-        value = self.value(xpath)
-        if value is not None:
-            return long(value, base)
-        else:
-            return default
-
     def float_value(self, xpath=None, default=None):
-        """Gets the float value at the specified xpath. If xpath argument is not given, return the value of the current element.
+        """Gets the float value at the specified xpath. If xpath argument is not given, return the value of the current
+        element.
 
         :param xpath: xpath
         :type xpath: str
@@ -258,7 +243,8 @@ class XmlElement(object):
             return default
 
     def boolean_value(self, xpath=None, default=None):
-        """Gets the bool value at the specified xpath. If xpath argument is not given, return the value of the current element.
+        """Gets the bool value at the specified xpath. If xpath argument is not given, return the value of the current
+        element.
 
         :param xpath: xpath
         :type xpath: str
@@ -303,7 +289,7 @@ class XmlElement(object):
         """
         if value is not None:
             if isinstance(value, datetime.datetime):
-                self._elem.text = time.strftime('%d-%b-%Y %H:%M:%S', value)
+                self._elem.text = value.strftime('%d-%b-%Y %H:%M:%S')
             elif isinstance(value, bool):
                 self._elem.text = str(value).lower()
             else:
@@ -400,13 +386,15 @@ class XmlElement(object):
         :rtype: str
 
         """
-        for ns in self._nsmap.keys():
+        for ns in list(self._nsmap.keys()):
             ElementTree.register_namespace(ns, self._nsmap.get(ns))
         te = ElementTree.Element('temp')
         te.append(self._elem)
         ts = ElementTree.tostring(te)
+        if isinstance(ts, bytes):
+            ts = ts.decode()
         ts = ts[ts.find('>') + 1:len(ts) - 7]
-        for nsk in self._nsmap.keys():
+        for nsk in list(self._nsmap.keys()):
             nsv = self._nsmap.get(nsk)
 
             def replacement(match):
@@ -416,7 +404,7 @@ class XmlElement(object):
                 else:  # ends with >
                     return token[0:-1] + ' xmlns:' + nsk + '="' + nsv + '">'
 
-            ts = re.sub(r'<' + nsk + ':[a-zA-Z0-9_-]+[\s>]', replacement, ts)
+            ts = re.sub(r'<' + nsk + r':[a-zA-Z0-9_-]+[\s>]', replacement, ts)
         return ts
 
     def __str__(self):
@@ -447,7 +435,7 @@ class XmlElement(object):
             else:
                 raise ValueError('Failed to parse XML file: ' + source)
         else:
-            return XmlElement(ElementTree.fromstring(str(source)))
+            return XmlElement(ElementTree.fromstring(source))
 
 
 def _process_xml_attributes(name, attributes):
@@ -461,7 +449,7 @@ def _process_xml_attributes(name, attributes):
             attrib[ns_attr] = ns
     # conver to str and remove attribute with value==None
     if attributes is not None:
-        for name in attributes.keys():
+        for name in list(attributes.keys()):
             value = attributes[name]
             if value is not None:
                 attrib[str(name)] = str(value)
@@ -515,7 +503,7 @@ class XmlStringWriter(object):
         self._stack.append(name)
         self._items.append('<')
         self._items.append(name)
-        for a in attributes.keys():
+        for a in list(attributes.keys()):
             self._items.append(' ')
             self._items.append(a)
             self._items.append('="')
@@ -554,7 +542,7 @@ class XmlStringWriter(object):
         attributes = _process_xml_attributes(name, attributes)
         self._items.append('<')
         self._items.append(name)
-        for a in attributes.keys():
+        for a in list(attributes.keys()):
             self._items.append(' ')
             self._items.append(a)
             self._items.append('="')
@@ -753,10 +741,10 @@ class MFConnection(object):
         :param token_type: Type of secure identity token
         :type token_type: str
         :param timeout: socket connection timeout.
-                        See also https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method
+            See also https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method
         :type timeout: float
         :param recv_timeout: socket receive timeout. Defaults to 10.0 seconds.
-                        See also https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method
+            See also https://stackoverflow.com/questions/2719017/how-to-set-timeout-on-pythons-socket-recv-method
         :type recv_timeout: float
         :param app: application name. Optional, can be used to restrict the secure identity tokens.
         :type app: str
@@ -877,8 +865,8 @@ class MFConnection(object):
             self._sock.connect((proxy_host, proxy_port))
             f = self._sock.makefile('r+')
             try:
-                f.write('CONNECT ' + self.host + ':' + self.port + ' HTTP/1.1\r\n')
-                f.write('Host: ' + self.host + ':' + self.port + '\r\n')
+                f.write('CONNECT ' + self.host + ':' + str(self.port) + ' HTTP/1.1\r\n')
+                f.write('Host: ' + self.host + ':' + str(self.port) + '\r\n')
                 if proxy_user is not None and proxy_password is not None:
                     f.write(
                         'Proxy-Authorization: Basic ' + base64.b64encode(
@@ -892,10 +880,12 @@ class MFConnection(object):
                 version = version[5:]
                 if status != '200':
                     raise ExHttpResponse('Unexpected HTTP ' + version + ' response: ' + status + ' ' + message)
-            except:
-                f.close()
-                self._sock.close()
-                raise  # re-throw exception
+            except BaseException as e:
+                try:
+                    logging.exception(e)
+                    raise e  # re-throw exception
+                finally:
+                    self._sock.close()
             finally:
                 f.close()
         else:
@@ -944,17 +934,24 @@ class MFConnection(object):
             finally:
                 self._session = None
 
+    def __enter__(self):
+        self.open()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
     def execute(self, service, args=None, inputs=None, outputs=None, route=None, emode=None):
         """ Execute the specified service on Mediaflux server.
 
         :param service: name of the service
         :type service: str
         :param args: service args. Can be XML string, XmlElement object or ElementTree.Element object.
-        :type args: XmlElement
+        :type args: XmlElement or str or None
         :param inputs: service inputs. List of MFInput objects.
-        :type inputs: list
+        :type inputs: list or MFInput or None
         :param outputs: service outputs. List of MFOutput objects.
-        :type outputs: list
+        :type outputs: list or MFOutput or None
         :param route: server route. Used for distributed service calls in federated server environment.
         :type route: str
         :param emode: execute mode. For distributed service calls. select from 'distributed-first' or 'distributed-all'
@@ -990,7 +987,7 @@ class MFConnection(object):
         else:
             header += 'http://'
         if self.host.find(':') != -1:
-            header = header + '[' + self.host + ']' + ':' + self.port + SVC_URL + ' HTTP/1.1\r\n'
+            header = header + '[' + str(self.host) + ']' + ':' + str(self.port) + SVC_URL + ' HTTP/1.1\r\n'
         else:
             header = header + self.host + ':' + str(self.port) + SVC_URL + ' HTTP/1.1\r\n'
         header += 'Host: ' + self.host + ':' + str(self.port) + '\r\n'
@@ -1010,7 +1007,7 @@ class MFConnection(object):
         else:
             header += 'Content-Length: ' + str(content_length) + '\r\n'
         header += '\r\n'
-        self._sock.sendall(header)
+        self._sock.sendall(header.encode())
 
 
 class MFInput(object):
@@ -1037,11 +1034,11 @@ class MFInput(object):
         if url:
             resp = None
             try:  # probe the mime type and length
-                resp = urllib.urlopen(url).info()
+                resp = urllib.request.urlopen(url).info()
                 self._type = resp.type
-                self._length = long(resp.getheaders('Content-Length')[0])
-            except:
-                pass
+                self._length = int(resp.getheaders('Content-Length')[0])
+            except BaseException as e:
+                logging.exception(e)
             finally:
                 if resp is not None:
                     resp.close()
@@ -1070,7 +1067,7 @@ class MFInput(object):
     def length(self):
         """ Length of the input file
         :return: Length of the input file
-        :rtype: long
+        :rtype: int
         """
         return self._length
 
@@ -1122,7 +1119,7 @@ class MFOutput(object):
         :return: output file object
         :rtype: file
         """
-        return self._file_obj;
+        return self._file_obj
 
     def path(self):
         """ output file path
@@ -1195,19 +1192,19 @@ class _MFRequest(object):
             self._send_content(sock)
 
         def _send_header(self, sock, remaining):
-            header = '\x01'
-            header += '\x01' if self._compress else '\x00'
+            header = b'\x01'
+            header += b'\x01' if self._compress else b'\x00'
             assert len(header) == 2
-            header += struct.pack('!q', self._length)
+            header += struct.pack(b'!q', self._length)
             assert len(header) == 10
-            header += struct.pack('!i', remaining)
+            header += struct.pack(b'!i', remaining)
             assert len(header) == 14
             if self._type is None:
-                header += struct.pack('>h', 0)
+                header += struct.pack(b'>h', 0)
                 assert len(header) == 16
             else:
                 mime_type = self._type.encode('utf-8')
-                header += struct.pack('>h', len(mime_type))
+                header += struct.pack(b'>h', len(mime_type))
                 assert len(header) == 16
                 header += mime_type
             sock.sendall(header)
@@ -1219,7 +1216,7 @@ class _MFRequest(object):
                 if self._path:
                     f = open(self._path, 'rb')
                 elif self._url:
-                    f = urllib.urlopen(self._url)
+                    f = urllib.request.urlopen(self._url)
                 else:
                     raise ValueError("Missing path or url.")
                 try:
@@ -1256,7 +1253,7 @@ class _MFRequest(object):
         outputs = [] if outputs is None else outputs
         outputs = [outputs] if not isinstance(outputs, list) else outputs
         nb_outputs = len(outputs)
-        data_out_min, data_out_max = (None, None) if nb_outputs == 0 else(nb_outputs, nb_outputs)
+        data_out_min, data_out_max = (None, None) if nb_outputs == 0 else (nb_outputs, nb_outputs)
         w.push('service',
                {'emode': emode, 'target': route, 'name': service, 'session': session, 'token-type': token_type,
                 'token': token_str, 'app': app, 'sgen': str(sgen), 'seq': str(seq), 'data-out-min': data_out_min,
@@ -1276,10 +1273,10 @@ class _MFRequest(object):
 
     @property
     def length(self):
-        length = 0L
+        length = 0
         for packet in self._packets:
             if packet.length == -1:
-                return -1L
+                return -1
             length += 16
             if packet.type:
                 length += len(packet.type.encode('utf-8'))
@@ -1334,7 +1331,7 @@ class _MFResponse(object):
             if bytes_length < 16:
                 data = sock.recv(BUFFER_SIZE)
                 if not data:
-                    raise ExHttpResponse('Incomplete packet ' + pkt_idx + '.')
+                    raise ExHttpResponse('Incomplete packet ' + str(pkt_idx) + '.')
                 else:
                     bytes_received += data
                     continue
@@ -1348,7 +1345,7 @@ class _MFResponse(object):
                 if bytes_length < (16 + pkt_mime_type_length):
                     data = sock.recv(BUFFER_SIZE)
                     if not data:
-                        raise ExHttpResponse('Incomplete packet ' + pkt_idx + '.')
+                        raise ExHttpResponse('Incomplete packet ' + str(pkt_idx) + '.')
                     else:
                         bytes_received += data
                         continue
@@ -1421,20 +1418,20 @@ class _MFResponse(object):
     def _recv_header(self, sock):
         # receive header
         header = ''
-        bytes_received = ''
+        bytes_received = b''
         completed = False
         while not completed:
             data = sock.recv(BUFFER_SIZE)
             if not data:
                 break
-            end = data.find('\r\n\r\n')  # end of header
+            end = data.find(b'\r\n\r\n')  # end of header
             if end >= 0:
-                header += data[0:end]
+                header += data[0:end].decode()
                 completed = True
                 bytes_received += data[end + 4:]
                 break
             else:
-                header += data
+                header += data.decode()
         if not completed:
             raise ExHttpResponse('Failed to receive http header. Incomplete header: ' + header)
         # parse header fields
@@ -1455,7 +1452,7 @@ class _MFResponse(object):
             if 'Content-Type' in self._http_header_fields and 'Content-Length' in self._http_header_fields:
                 # Error with content/message.
                 content_type = self._http_header_fields['Content-Type']
-                content_length = long(self._http_header_fields['Content-Length'])
+                content_length = int(self._http_header_fields['Content-Length'])
                 idx = content_type.find('charset=')
                 encoding = None if idx == -1 else content_type[idx + 8:]
                 content = ''
@@ -1505,11 +1502,17 @@ class ExProxyAuthenticationRequired(Exception):
 
 def _crc32(path):
     from zlib import crc32
-    with open(path, 'r') as f:
-        crc = crc32('')
+    with open(path, 'rb') as f:
+        crc = crc32(b'')
         while True:
             data = f.read(BUFFER_SIZE)
             if not data:
                 break
             crc = crc32(data, crc)
     return crc
+
+
+if __name__ == '__main__':
+    with MFConnection('localhost', 8086, transport='http', domain='system', user='manager', password='change_me') as r:
+        print(r.execute('asset.get', '<args><id>535</id></args>'))
+

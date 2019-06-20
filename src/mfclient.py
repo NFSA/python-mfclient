@@ -863,7 +863,7 @@ class MFConnection(object):
         if self.proxy is not None:
             (proxy_host, proxy_port, proxy_user, proxy_password) = self.proxy
             self._sock.connect((proxy_host, proxy_port))
-            f = self._sock.makefile('r+')
+            f = self._sock.makefile('rw')
             try:
                 f.write('CONNECT ' + self.host + ':' + str(self.port) + ' HTTP/1.1\r\n')
                 f.write('Host: ' + self.host + ':' + str(self.port) + '\r\n')
@@ -876,7 +876,8 @@ class MFConnection(object):
                 line = f.readline().rstrip('\r\n').strip()
                 if len(line) == 0 or not line.startswith('HTTP/') or line.count(' ') < 2:
                     raise ExHttpResponse('Invalid HTTP response: ' + line)
-                (version, status, message) = line.split()
+                split_line = line.split();
+                version, status, message = split_line[0], split_line[1], split_line[2:]
                 version = version[5:]
                 if status != '200':
                     raise ExHttpResponse('Unexpected HTTP ' + version + ' response: ' + status + ' ' + message)
@@ -1511,6 +1512,4 @@ def _crc32(path):
             crc = crc32(data, crc)
     return crc
 
-
 # if __name__ == '__main__':
-

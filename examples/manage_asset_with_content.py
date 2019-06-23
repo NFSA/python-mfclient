@@ -56,7 +56,7 @@ def get_asset_content(connection, asset_id, output_file_path):
     output = mfclient.MFOutput(path=output_file_path)
 
     # run asset.get service
-    result = connection.execute('asset.get', w.doc_text())
+    result = connection.execute('asset.get', w.doc_text(), outputs=[output])
 
     asset_metadata = result.element('asset')
     return asset_metadata

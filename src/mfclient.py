@@ -1314,6 +1314,7 @@ class _MFResponse(object):
         self._http_header_fields = {}
         self._result = None
         self._error = None
+        self._chunked = False
 
     @property
     def result(self):
@@ -1326,6 +1327,12 @@ class _MFResponse(object):
     def recv(self, sock):
         sock.settimeout(self._timeout)
         bytes_received = self._recv_header(sock)
+        if self._chunked:
+            self._recv_chunked_packets(sock, bytes_received)
+        else:
+            self._recv_packets(sock, bytes_received)
+
+    def _recv_packets(self, sock, bytes_received):
         pkt_idx = 0  # packet index
         while True:
             bytes_length = len(bytes_received)
@@ -1340,7 +1347,9 @@ class _MFResponse(object):
             pkt_remaining = struct.unpack('>i', bytes_received[10:14])[0]
             pkt_mime_type_length = struct.unpack('>h', bytes_received[14:16])[0]
             if pkt_mime_type_length <= 0:
-                bytes_received = self._recv_packet(sock, pkt_idx, pkt_length, None, bytes_received, pkt_remaining)
+                pkt_mime_type = None
+                bytes_received = self._recv_packet(sock, pkt_idx, pkt_length, pkt_mime_type, bytes_received,
+                                                   pkt_remaining)
                 pkt_idx += 1
             else:
                 if bytes_length < (16 + pkt_mime_type_length):
@@ -1407,6 +1416,139 @@ class _MFResponse(object):
                 f.close()
         return bytes_received
 
+    def _recv_chunk(self, sock, bytes_received):
+        if not bytes_received or len(bytes_received) == 0:
+            bytes_received = sock.recv(BUFFER_SIZE)
+        # print(b'CHUNK.BUFFER: ' + bytes_received)
+        while bytes_received.startswith(b'\r\n'):
+            bytes_received = bytes_received[2:]
+        chunk_data = b''
+        chunk_length = 0
+        idx = bytes_received.find(b'\r\n')
+        while idx < 0:
+            bytes_received += sock.recv(BUFFER_SIZE)
+            idx = bytes_received.find(b'\r\n')
+        chunk_length = int(bytes_received[0:idx].decode(), base=16)
+        bytes_received = bytes_received[idx + 2:]
+        if chunk_length == 4 and bytes_received.find(b'\r\n') == 4:
+            chunk_length = struct.unpack('>i', bytes_received[0:4])[0]
+            bytes_received = bytes_received[6:]
+            idx = bytes_received.find(b'\r\n')
+            if idx <= 8:
+                chunk_length2 = int(bytes_received[0:idx].decode(), base=16)
+                assert chunk_length2 == chunk_length
+                bytes_received = bytes_received[idx + 2:]
+        # print('CHUNK.LENGTH.B: ' + str(chunk_length))
+        while len(bytes_received) < chunk_length:
+            bytes_received += sock.recv(BUFFER_SIZE)
+        chunk_data = bytes_received[0:chunk_length]
+        bytes_received = bytes_received[chunk_length:]
+        return chunk_data, bytes_received
+
+    def _recv_chunked_packets(self, sock, bytes_received):
+        pkt_idx = 0  # packet index
+        chunks_received = b''
+        while True:
+            while len(chunks_received) < 16:
+                chunk, bytes_received = self._recv_chunk(sock, bytes_received)
+                chunks_received += chunk
+            pkt_length = struct.unpack('>q', chunks_received[2:10])[0]
+            pkt_remaining = struct.unpack('>i', chunks_received[10:14])[0]
+            pkt_mime_type_length = struct.unpack('>h', chunks_received[14:16])[0]
+            if pkt_mime_type_length <= 0:
+                pkt_mime_type = None
+                # chunks_received = chunks_received[16 + 4:]
+                chunks_received, bytes_received = self._recv_chunked_packet(sock, pkt_idx, pkt_length, pkt_mime_type,
+                                                                            chunks_received, bytes_received,
+                                                                            pkt_remaining)
+                pkt_idx += 1
+            else:
+                while len(chunks_received) < (16 + pkt_mime_type_length):
+                    chunk, bytes_received = self._recv_chunk(sock, bytes_received)
+                    chunks_received += chunk
+                pkt_mime_type = chunks_received[16:16 + pkt_mime_type_length]
+                chunks_received = chunks_received[16 + pkt_mime_type_length:]
+                if bytes_received.startswith(b'\r\n') and len(chunks_received) == 4:
+                    chunk_length = struct.unpack('>i', chunks_received)[0]
+                    # print('CHUNK.LENGTH.A: ' + str(chunk_length))
+                    chunks_received = b''
+
+                chunks_received, bytes_received = self._recv_chunked_packet(sock, pkt_idx, pkt_length, pkt_mime_type,
+                                                                            chunks_received, bytes_received,
+                                                                            pkt_remaining)
+                pkt_idx += 1
+            if pkt_remaining == 0:
+                break
+
+    def _recv_chunked_packet(self, sock, idx, length, mime_type, chunks_received, bytes_received, remaining):
+        if idx == 0:  # first packet: result/error xml
+            if length >= 0:
+                while len(chunks_received) < length:
+                    chunk, bytes_received = self._recv_chunk(sock, bytes_received)
+                    chunks_received += chunk
+                self._parse_reply(chunks_received[0:length])
+                chunks_received = chunks_received[length:]
+            else:
+                self._parse_reply(chunks_received)
+                chunks_received = b''
+            # now check outputs
+            nb_outputs = len(self._outputs)
+            if remaining != nb_outputs:
+                raise ExHttpResponse('Mismatch number of service outputs. Expecting ' + str(nb_outputs) +
+                                     ', found ' + str(remaining))
+        else:
+            output = self._outputs[idx - 1]
+            if mime_type:
+                output.set_mime_type(mime_type)
+            if output.file_object():
+                f = output.file_object()
+            else:
+                f = open(output.path(), 'wb')
+            try:
+                if length >= 0:
+                    bytes_written = 0
+                    if len(chunks_received) < length:
+                        if len(chunks_received) > 0:
+                            f.write(chunks_received)
+                            f.flush()
+                            bytes_written += len(chunks_received)
+                            chunks_received = b''
+                            # print('written: ' + str(n))
+                        while bytes_written < length:
+                            chunk, bytes_received = self._recv_chunk(sock, bytes_received)
+                            if bytes_written + len(chunk) < length:
+                                f.write(chunk)
+                                bytes_written += len(chunk)
+                            else:
+                                f.write(chunk[0:length - bytes_written])
+                                chunks_received = chunk[length - bytes_written:]
+                                bytes_written = length
+                            f.flush()
+                            # print('written: ' + str(n))
+                    else:
+                        f.write(chunks_received[0:length])
+                        chunks_received = chunks_received[length:]
+                else:
+                    if len(chunks_received) > 0:
+                        #print(b'writing CHUNK: ' + chunks_received)
+                        f.write(chunks_received)
+                        f.flush()
+                        chunks_received = b''
+                    while True:
+                        chunk, bytes_received = self._recv_chunk(sock, bytes_received)
+                        if not chunk or len(chunk) == 0:
+                            break
+                        else:
+                            if chunk.endswith(b'\xff\xff\xff\xff') and struct.unpack('>i', chunk[0:4])[0] == len(
+                                    chunk) - 8:
+                                chunk = chunk[4:-4]
+                            # print(b'writing CHUNK: ' + chunk)
+                            f.write(chunk)
+                            f.flush()
+            finally:
+                f.close()
+        return chunks_received, bytes_received
+
     def _parse_reply(self, text):
         rxe = XmlElement.parse(text)
         reply_type = rxe.value('reply/@type')
@@ -1428,8 +1570,8 @@ class _MFResponse(object):
             end = data.find(b'\r\n\r\n')  # end of header
             if end >= 0:
                 header += data[0:end].decode()
-                completed = True
                 bytes_received += data[end + 4:]
+                completed = True
                 break
             else:
                 header += data.decode()
@@ -1444,6 +1586,7 @@ class _MFResponse(object):
             raise ExHttpResponse("Invalid http response: missing status message.")
         if self._http_status_code == '200':
             # 200: success
+            # print('HTTP.RESPONSE.HEADER: ' +header)
             return bytes_received
         elif self._http_status_code == '407':
             # 407: proxy auth required
@@ -1487,6 +1630,8 @@ class _MFResponse(object):
         for line in lines:
             kv = line.split(':')
             self._http_header_fields[kv[0]] = kv[1].strip()
+        self._chunked = 'Transfer-Encoding' in self._http_header_fields and self._http_header_fields[
+            'Transfer-Encoding'] == 'chunked'
 
 
 class ExNotConnected(Exception):

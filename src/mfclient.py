@@ -539,6 +539,7 @@ class XmlStringWriter(object):
         :type attributes: dict
         :return:
         """
+        from xml.sax.saxutils import escape
         attributes = _process_xml_attributes(name, attributes)
         self._items.append('<')
         self._items.append(name)
@@ -546,10 +547,10 @@ class XmlStringWriter(object):
             self._items.append(' ')
             self._items.append(a)
             self._items.append('="')
-            self._items.append(attributes[a])
+            self._items.append(escape(str(attributes[a])))
             self._items.append('"')
         self._items.append('>')
-        self._items.append(str(value))
+        self._items.append(escape(str(value)))
         self._items.append('</')
         self._items.append(name)
         self._items.append('>')

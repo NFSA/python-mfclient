@@ -7,7 +7,10 @@ Python Mediaflux Client.
 
   - 2) import mfclient module into your python code and use the API to communicate with Mediaflux server.
 
-  - 3) simple example below shows how to import the module, connect to mediaflux server and execute a service:
+  - 3) a simple example below shows how to
+    - import the module, 
+    - log into Mediaflux server using domain, username and password, 
+    - execute a mediaflux service: server.uuid, which returns the Mediaflux server's UUID.
 
 
 ```python
@@ -34,7 +37,7 @@ if __name__ == '__main__':
         connection.close()
 
 ```
-  - 4) Secure identity token can be used to authenticate with Mediaflux server (if applicable). See example below:
+  - 4) Secure identity token can also be used to authenticate with Mediaflux server. See example below:
 
 
 ```python

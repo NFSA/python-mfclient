@@ -1,13 +1,18 @@
 # python-mfclient
-A (unofficial) Mediaflux client library written in python. It provides the API that enables users to connect to Mediaflux server and execute any service/command to manage data in Mediaflux, such as
-  * get/set asset metadata
-  * download/upload/search data
+A (unofficial) Mediaflux client library written in python. It provides the Python API for Mediaflux users to connect to Mediaflux server and execute any service/command to manage data in Mediaflux, such as
+  * get/set asset metadata in Mediaflux
+  * download/upload/search data in Mediaflux
 
-### Limitations
-This client library is unofficial. Arcitecta, the Vendor of the Mediaflux software DOES NOT provide any support for this library. And this library has following limitations compared with the official Mediaflux Java Client API.
-  * the python-client does not do connection pooling
-  * the python-client does not support cluster I/O
-  * the python-client does not provide `retry` option 
+It is developed by Research Computing Services. Arcitecta, the Vendor of the Mediaflux software DOES NOT provide any support for this library. 
+
+## Limitations
+Compared with the official Mediaflux Java Client library, this (unofficial) Python library has following limitations:
+  * it does not provide connection pooling functions. Users will need to implement its own connection pool to execute concurrent tasks.
+  * it does not support Mediaflux cluster I/O. So it will always connect to the Mediaflux Controller node even if there are Cluster I/O nodes available to improve the network I/O performance.
+  * it does not provide `retry` option to re-execute an operation when encounters a network issue.
+  * most importantly, there is no guarantee that this library will be aligned with the Mediaflux server upgrades.
+
+
 
 
 ### 1. Quick Start

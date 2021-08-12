@@ -1,5 +1,10 @@
 # python-mfclient
-Python Mediaflux Client.
+A (unofficial) Mediaflux client library written in python. It includes the API to:
+* connect to Mediaflux server
+* upload local file to Mediaflux
+* download asset (file) from Mediaflux
+* retrieve/update asset metadata in Mediaflux
+
 
 ### 1. Quick Start
 

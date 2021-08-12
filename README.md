@@ -9,12 +9,11 @@ It is developed by Research Computing Services. Arcitecta, the Vendor of the Med
 Compared with the official Mediaflux Java Client library, this (unofficial) Python library has following limitations:
   * it does not provide connection pooling functions. Users will need to implement its own connection pool to execute concurrent tasks.
   * it does not support Mediaflux cluster I/O. So it will always connect to the Mediaflux Controller node even if there are Cluster I/O nodes available to improve the network I/O performance.
-  * it does not provide `retry` option to re-execute an operation when encounters a network issue.
+  * it does not support `retry` option to re-execute an operation when encounters a network issue.
   * most importantly, there is no guarantee that this library will be aligned with the Mediaflux server upgrades.
 
 
-
-
+##
 ### 1. Quick Start
 
   - 1) Check out [mfclient.py](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/raw/master/src/mfclient.py) from [GitLab](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient)

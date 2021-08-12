@@ -3,12 +3,13 @@ A (unofficial) Mediaflux client library written in python. It allows Mediaflux u
 
 
 ## ⚠NOTE:
-This library is developed by Research Computing Services. Just be aware of the risk of lacking official support from Arcitecta, the vendor of Mediaflux software. 
-Compared with the official Mediaflux Java Client library, this (unofficial) Python library has following limitations:
-  * ︎️it does not provide connection pooling functions. Users will need to implement its own connection pool to execute concurrent tasks.
-  * ︎️it does not support Mediaflux cluster I/O. So it will always connect to the Mediaflux Controller node even if there are Cluster I/O nodes available to improve the network I/O performance.
-  * ︎️it does not support `retry` option to re-execute an operation when encounters a network issue.
-  * ︎️most importantly, there is no guarantee that this library will be aligned with future Mediaflux server upgrades.
+**This library is developed by Research Computing Services. Just be aware of the risk of lacking official support from Arcitecta, the vendor of Mediaflux software. 
+Compared with the official Mediaflux Java Client library, this (unofficial) Python library has following limitations:**
+
+  * **︎️it does not provide connection pooling functions. Users will need to implement its own connection pool to execute concurrent tasks.**
+  * **︎️it does not support Mediaflux cluster I/O. So it will always connect to the Mediaflux Controller node even if there are Cluster I/O nodes available to improve the network I/O performance.**
+  * **︎️it does not support `retry` option to re-execute an operation when encounters a network issue.**
+  * **︎️most importantly, there is no guarantee that this library will be aligned with future Mediaflux server upgrades.**
 
 
 ##

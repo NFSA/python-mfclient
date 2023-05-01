@@ -61,6 +61,3 @@ if __name__ == '__main__':
   - 7) [get asset content (download asset content to local file system)](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_with_content.py)
   
   * See [more exmamples](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/tree/master/examples)
-
-### 3. API Documentation
-  * See [API documentation on readthedocs.io](http://python-mfclient.readthedocs.io/en/latest/source/mfclient.html#module-mfclient)

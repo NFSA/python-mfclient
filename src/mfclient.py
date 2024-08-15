@@ -893,7 +893,10 @@ class MFConnection(object):
         else:
             self._sock.connect((self.host, self.port))
         if self.encrypt:
-            self._sock = ssl.wrap_socket(self._sock)
+            if sys.version_info.major >= 3 and sys.version_info.minor >= 12:
+                self._sock = ssl.SSLContext().wrap_socket(self._sock)
+            else:
+                self._sock = ssl.wrap_socket(self._sock)
 
     def _close_socket(self):
         if self._sock is not None:

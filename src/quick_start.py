@@ -2,8 +2,8 @@ import mfclient
 
 if __name__ == '__main__':
     # create connection object (NOTE: You need to substitute with your server details.)
-    connection = mfclient.MFConnection(host='localhost', port=8080, transport='http', domain='system',
-                                       user='manager', password='change_me')
+    connection = mfclient.MFConnection(host='mediaflux-test.researchsoftware.unimelb.edu.au', port=8080, transport='http', domain='mfa-test',
+                                       user='rajtest1', password='testing123')
     try:
         # connect to mediaflux server
         connection.open()
@@ -18,3 +18,5 @@ if __name__ == '__main__':
         print(result.value('version'))
     finally:
         connection.close()
+
+

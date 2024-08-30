@@ -11,11 +11,12 @@ import pandas as pd
 # None or nan indicates dont add person to proj, don't remove either
 
 # num of rows in the csv file to skip at start if needed
-SKIP_ROWS = 1
+SKIP_ROWS = 0
+DELIMITER = ';'
 if __name__ == '__main__':
     # create connection object (NOTE: You need to substitute with your server details.)
     connection = mfclient.MFConnection(host='mediaflux.researchsoftware.unimelb.edu.au', port=443, transport='https', domain='system',
-                                       user='rajaramans', password='A7nFi[MO9@Tz,YJFN}mw(V2.]%37G5')
+                                       user='rajaramans', password='')
     try:
         # connect to mediaflux server
         connection.open()
@@ -28,7 +29,7 @@ if __name__ == '__main__':
 
         # print server version
         print(result.value('version'))
-        users = pd.read_csv("/Users/rajaramans/Documents/Mediaflux_20240320.csv",skiprows=SKIP_ROWS)
+        users = pd.read_csv("/Users/rajaramans/PycharmProjects/python-mfclient/proj-add1.csv",skiprows=SKIP_ROWS,delimiter=DELIMITER)
         email_col = 'email'
         project_cols = []
         for i in list(users.columns):

@@ -12,7 +12,8 @@ import pandas as pd
 
 # num of rows in the csv file to skip at start if needed
 SKIP_ROWS = 0
-DELIMITER = ';'
+DELIMITER = ','
+EMAIL =False
 if __name__ == '__main__':
     # create connection object (NOTE: You need to substitute with your server details.)
     connection = mfclient.MFConnection(host='mediaflux.researchsoftware.unimelb.edu.au', port=443, transport='https', domain='system',
@@ -31,17 +32,23 @@ if __name__ == '__main__':
         print(result.value('version'))
         users = pd.read_csv("/Users/rajaramans/PycharmProjects/python-mfclient/proj-add1.csv",skiprows=SKIP_ROWS,delimiter=DELIMITER)
         email_col = 'email'
+        user_col = 'user'
+        main_domain = 'unimelb'
         project_cols = []
         for i in list(users.columns):
             if i.startswith("proj"):
                 project_cols.append(i)
         print(project_cols)
         for row in range(users.shape[0]):
-            w = mfclient.XmlStringWriter('args')
-            w.add('email', users[email_col][row])
-            user = connection.execute('unimelb.user.search', w.doc_text())
-            domain = user.value('user/@domain')
-            username = user.value('user/@user')
+            if EMAIL:
+                w = mfclient.XmlStringWriter('args')
+                w.add('email', users[email_col][row])
+                user = connection.execute('unimelb.user.search', w.doc_text())
+                domain = user.value('user/@domain')
+                username = user.value('user/@user')
+            else:
+                username = users[user_col][row]
+                domain = main_domain
             #print(user)
             print("{} {} {}".format(users[email_col][row],username,domain))
             if username is None:

@@ -1,18 +1,12 @@
 import mfclient
 
-# MF_HOST = 'mediaflux.researchsoftware.unimelb.edu.au'
-# MF_PORT = 443
-# MF_TRANSPORT = 'https'
-# MF_DOMAIN = 'aaf'
-# MF_USER = 'unimelb:_USERNAME_'
-# MF_PASSWORD = '_PASSWORD_'
+MF_HOST = 'mediaflux.any-corp.org'
+MF_PORT = 443
+MF_TRANSPORT = 'https'
+MF_DOMAIN = 'YOUR_DOMAIN'
+MF_USER = 'YOUR_USERNAME'
+MF_PASSWORD = 'YOUR_PASSWORD'
 
-MF_HOST = 'localhost'
-MF_PORT = 8086
-MF_TRANSPORT = 'http'
-MF_DOMAIN = 'system'
-MF_USER = 'manager'
-MF_PASSWORD = 'change_me'
 
 DARIS_WEB_URL = MF_TRANSPORT.lower() + '://' + MF_HOST.lower() + ':' + str(MF_PORT) + '/daris-web/'
 

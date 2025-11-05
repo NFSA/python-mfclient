@@ -1,6 +1,6 @@
 import mfclient
 
-MF_HOST = 'mediaflux.any-corp.org'
+MF_HOST = 'mediaflux.your-org.org'
 MF_PORT = 443
 MF_TRANSPORT = 'https'
 MF_DOMAIN = 'YOUR_DOMAIN'

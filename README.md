@@ -52,12 +52,13 @@ if __name__ == '__main__':
 
 ### 2. Examples
 
-  - 1) [quick-start example](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/quick_start.py)
-  - 2) [authenticate with token](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/-/blob/master/examples/connect_with_token.py)
-  - 3) [create asset with metadata](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_metadata.py)
-  - 4) [get asset metadata](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_metadata.py)
-  - 5) [change asset metadata](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_metadata.py)
-  - 6) [create asset with content (upload a file as an asset)](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_with_content.py)
-  - 7) [get asset content (download asset content to local file system)](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_with_content.py)
+  1. [quick-start example](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/quick_start.py)
+  1. [authenticate with token](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/-/blob/master/examples/connect_with_token.py)
+  1. [create asset with metadata](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_metadata.py)
+  1. [get asset metadata](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_metadata.py)
+  1. [change asset metadata](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_metadata.py)
+  1. [create asset with content (upload a file as an asset) in an asset namespace](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_with_content.py)
+  1. [create asset with content (upload a file as an asset) in an asset collection](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_with_content_collection.py)
+  1. [get asset content (download asset content to local file system)](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/blob/master/examples/manage_asset_with_content.py)
   
   * See [more exmamples](https://gitlab.unimelb.edu.au/resplat-mediaflux/python-mfclient/tree/master/examples)

@@ -45,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'python_mfclient'
+project = u'python-mfclient'
 copyright = u'2017, Wei Liu'
 author = u'Wei Liu'
 
